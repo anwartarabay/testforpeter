@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lebanon Location Explorer</title>
+  <title>Lebanon Random Street View</title>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUX4nOaDDLMpXPE4kzzG7suF-dYcj-tkc"></script>
   <style>
-    #map {
-      height: 400px;
+    #street-view {
       width: 100%;
+      height: 400px;
     }
     #game-info {
       text-align: center;
@@ -17,82 +17,64 @@
   </style>
 </head>
 <body>
-  <h2 style="text-align: center;">Explore Locations in Lebanon</h2>
-  <div id="map"></div>
+  <h2 style="text-align: center;">Explore Random Street Views in Lebanon</h2>
+  <div id="street-view"></div>
   <div id="game-info">
-    <button onclick="showRandomLocation()">Show Random Location</button>
-    <p><strong>Region:</strong> <span id="region-info"></span></p>
-    <p><strong>Location:</strong> <span id="location-info"></span></p>
+    <button onclick="getRandomStreetView()">Show New Random Street View</button>
   </div>
 
   <script>
-    let map;
-    let targetMarker;
+    let panorama;
 
-    // Define regions with both popular and lesser-known locations
-    const regions = {
-      "Beirut": [
-        { name: "Beirut Downtown", lat: 33.8951, lng: 35.5057 },
-        { name: "Gemmayze", lat: 33.8978, lng: 35.5103 },
-        { name: "Karantina", lat: 33.9067, lng: 35.5253 },
-        { name: "Corniche Beirut", lat: 33.9051, lng: 35.4733 }
-      ],
-      "Mount Lebanon": [
-        { name: "Jounieh", lat: 33.9808, lng: 35.6174 },
-        { name: "Beit Mery", lat: 33.8674, lng: 35.6024 },
-        { name: "Chouf Cedar Reserve", lat: 33.6897, lng: 35.6624 },
-        { name: "Broummana", lat: 33.8864, lng: 35.5876 }
-      ],
-      "North Lebanon": [
-        { name: "Tripoli Citadel", lat: 34.4367, lng: 35.8525 },
-        { name: "Ehden", lat: 34.2986, lng: 35.9787 },
-        { name: "Ras Bsharri", lat: 34.2516, lng: 36.0102 },
-        { name: "Batroun Old Souks", lat: 34.2545, lng: 35.6582 }
-      ],
-      "South Lebanon": [
-        { name: "Sidon Sea Castle", lat: 33.5576, lng: 35.3723 },
-        { name: "Tyre Al-Bass Site", lat: 33.2707, lng: 35.2033 },
-        { name: "Mleeta Resistance Landmark", lat: 33.4729, lng: 35.5851 },
-        { name: "Qana Caves", lat: 33.2250, lng: 35.2995 }
-      ],
-      "Bekaa Valley": [
-        { name: "Baalbek Temples", lat: 34.0058, lng: 36.2181 },
-        { name: "Zahle Winery", lat: 33.8492, lng: 35.9077 },
-        { name: "Anjar Ruins", lat: 33.7256, lng: 35.9336 },
-        { name: "Taanayel Lake", lat: 33.8251, lng: 35.8714 }
-      ]
+    // Define Lebanon's approximate geographic boundaries
+    const LEBANON_BOUNDS = {
+      minLat: 33.05,
+      maxLat: 34.70,
+      minLng: 35.1,
+      maxLng: 36.6
     };
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 33.8938, lng: 35.5018 }, // Center map on Lebanon
-        zoom: 8,
-      });
+    // Initialize Street View
+    function initStreetView() {
+      panorama = new google.maps.StreetViewPanorama(
+        document.getElementById("street-view"), {
+          pov: { heading: 165, pitch: 0 },
+          zoom: 1
+        }
+      );
+      getRandomStreetView(); // Start with a random view
     }
 
-    function showRandomLocation() {
-      const regionKeys = Object.keys(regions);
-      const randomRegion = regionKeys[Math.floor(Math.random() * regionKeys.length)];
-      const randomLocation = regions[randomRegion][Math.floor(Math.random() * regions[randomRegion].length)];
-
-      // Display region and location information
-      document.getElementById("region-info").textContent = randomRegion;
-      document.getElementById("location-info").textContent = randomLocation.name;
-
-      // Place marker on the random location
-      if (targetMarker) targetMarker.setMap(null);
-      targetMarker = new google.maps.Marker({
-        position: { lat: randomLocation.lat, lng: randomLocation.lng },
-        map: map,
-        label: "T",
-      });
-
-      // Center the map on the target location
-      map.setCenter({ lat: randomLocation.lat, lng: randomLocation.lng });
-      map.setZoom(12); // Zoom in on the target location
+    // Generate a random latitude and longitude within Lebanon's bounds
+    function getRandomLatLng() {
+      const lat = LEBANON_BOUNDS.minLat + (Math.random() * (LEBANON_BOUNDS.maxLat - LEBANON_BOUNDS.minLat));
+      const lng = LEBANON_BOUNDS.minLng + (Math.random() * (LEBANON_BOUNDS.maxLng - LEBANON_BOUNDS.minLng));
+      return { lat, lng };
     }
 
-    window.onload = initMap;
+    // Get a random Street View location within Lebanon
+    function getRandomStreetView() {
+      const sv = new google.maps.StreetViewService();
+      const randomLatLng = getRandomLatLng();
+
+      // Use Street View Service to check for available panoramas at the random location
+      sv.getPanorama({ location: randomLatLng, radius: 500 }, processSVData);
+    }
+
+    // Callback function to process the Street View data
+    function processSVData(data, status) {
+      if (status === google.maps.StreetViewStatus.OK) {
+        // Street View data is available; display it
+        panorama.setPosition(data.location.latLng);
+        panorama.setPov({ heading: 165, pitch: 0 });
+      } else {
+        // No Street View available at this point; try another random point
+        getRandomStreetView();
+      }
+    }
+
+    // Initialize Street View on page load
+    window.onload = initStreetView;
   </script>
 </body>
 </html>
