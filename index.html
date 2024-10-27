@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lebanon Geolocation Game</title>
+  <title>Lebanon Geolocation Exploration Game</title>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUX4nOaDDLMpXPE4kzzG7suF-dYcj-tkc"></script>
   <style>
     #map {
@@ -17,19 +17,16 @@
   </style>
 </head>
 <body>
-  <h2 style="text-align: center;">Lebanon Geolocation Game</h2>
+  <h2 style="text-align: center;">Explore Locations in Lebanon</h2>
   <div id="map"></div>
   <div id="game-info">
-    <p id="message">Find the target location within the specified region!</p>
-    <button onclick="startGame()">Start Game</button>
-    <button onclick="retryGeolocation()">Retry Geolocation</button>
+    <button onclick="startExploration()">Show New Location</button>
     <p><strong>Region:</strong> <span id="region-info"></span></p>
-    <p><strong>Target Location:</strong> <span id="target-info"></span></p>
+    <p><strong>Location:</strong> <span id="location-info"></span></p>
   </div>
 
   <script>
     let map;
-    let playerMarker;
     let targetMarker;
 
     // Define regions with both popular and lesser-known locations
@@ -68,30 +65,16 @@
 
     let target;
     let currentRegion;
-    const proximityThreshold = 0.01; // ~1 km
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 33.8938, lng: 35.5018 },
+        center: { lat: 33.8938, lng: 35.5018 }, // Center map on Lebanon
         zoom: 8,
       });
     }
 
-    function startGame() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(updatePlayerLocation, handleError, { enableHighAccuracy: true });
-        setNewTarget();
-      } else {
-        alert("Geolocation is not supported by this browser.");
-      }
-    }
-
-    function retryGeolocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(updatePlayerLocation, handleError, { enableHighAccuracy: true });
-      } else {
-        alert("Geolocation is not supported by this browser.");
-      }
+    function startExploration() {
+      setNewTarget();
     }
 
     function setNewTarget() {
@@ -100,72 +83,21 @@
       const regionLocations = regions[currentRegion];
       target = regionLocations[Math.floor(Math.random() * regionLocations.length)]; // Randomly select location in region
 
+      // Update target display
       document.getElementById("region-info").textContent = currentRegion;
-      document.getElementById("target-info").textContent = `${target.name} (Lat: ${target.lat}, Lng: ${target.lng})`;
+      document.getElementById("location-info").textContent = target.name;
 
+      // Place marker for the target
       if (targetMarker) targetMarker.setMap(null);
       targetMarker = new google.maps.Marker({
         position: { lat: target.lat, lng: target.lng },
         map: map,
         label: "T",
       });
-    }
 
-    function updatePlayerLocation(position) {
-      const playerPos = { lat: position.coords.latitude, lng: position.coords.longitude };
-      if (playerMarker) playerMarker.setMap(null);
-
-      playerMarker = new google.maps.Marker({
-        position: playerPos,
-        map: map,
-        label: "P",
-      });
-
-      map.setCenter(playerPos);
-
-      checkProximity(playerPos);
-    }
-
-    function checkProximity(playerPos) {
-      const distance = getDistance(playerPos.lat, playerPos.lng, target.lat, target.lng);
-      if (distance <= proximityThreshold) {
-        document.getElementById("message").textContent = `Congratulations! You've reached ${target.name} in ${currentRegion}.`;
-        setTimeout(setNewTarget, 2000); // Set a new target after a short delay
-      } else {
-        document.getElementById("message").textContent = `Get closer to ${target.name} in ${currentRegion}! Distance: ${(distance * 1000).toFixed(1)} m`;
-      }
-    }
-
-    function getDistance(lat1, lng1, lat2, lng2) {
-      const R = 6371; // Radius of Earth in km
-      const dLat = degreesToRadians(lat2 - lat1);
-      const dLng = degreesToRadians(lng2 - lng1);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(degreesToRadians(lat1)) * Math.cos(degreesToRadians(lat2)) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c; // Distance in km
-    }
-
-    function degreesToRadians(degrees) {
-      return degrees * (Math.PI / 180);
-    }
-
-    function handleError(error) {
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          document.getElementById("message").textContent = "Location access denied. Please enable location access and try again.";
-          break;
-        case error.POSITION_UNAVAILABLE:
-          document.getElementById("message").textContent = "Location information is unavailable. Retry in a moment.";
-          break;
-        case error.TIMEOUT:
-          document.getElementById("message").textContent = "Location request timed out. Please retry.";
-          break;
-        case error.UNKNOWN_ERROR:
-          document.getElementById("message").textContent = "An unknown error occurred.";
-          break;
-      }
+      // Center the map on the target location
+      map.setCenter({ lat: target.lat, lng: target.lng });
+      map.setZoom(12); // Zoom in to the target area
     }
 
     window.onload = initMap;
