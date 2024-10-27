@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lebanon Geolocation Exploration Game</title>
+  <title>Lebanon Location Explorer</title>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUX4nOaDDLMpXPE4kzzG7suF-dYcj-tkc"></script>
   <style>
     #map {
@@ -20,7 +20,7 @@
   <h2 style="text-align: center;">Explore Locations in Lebanon</h2>
   <div id="map"></div>
   <div id="game-info">
-    <button onclick="startExploration()">Show New Location</button>
+    <button onclick="showRandomLocation()">Show Random Location</button>
     <p><strong>Region:</strong> <span id="region-info"></span></p>
     <p><strong>Location:</strong> <span id="location-info"></span></p>
   </div>
@@ -63,9 +63,6 @@
       ]
     };
 
-    let target;
-    let currentRegion;
-
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 33.8938, lng: 35.5018 }, // Center map on Lebanon
@@ -73,31 +70,26 @@
       });
     }
 
-    function startExploration() {
-      setNewTarget();
-    }
-
-    function setNewTarget() {
+    function showRandomLocation() {
       const regionKeys = Object.keys(regions);
-      currentRegion = regionKeys[Math.floor(Math.random() * regionKeys.length)]; // Randomly select a region
-      const regionLocations = regions[currentRegion];
-      target = regionLocations[Math.floor(Math.random() * regionLocations.length)]; // Randomly select location in region
+      const randomRegion = regionKeys[Math.floor(Math.random() * regionKeys.length)];
+      const randomLocation = regions[randomRegion][Math.floor(Math.random() * regions[randomRegion].length)];
 
-      // Update target display
-      document.getElementById("region-info").textContent = currentRegion;
-      document.getElementById("location-info").textContent = target.name;
+      // Display region and location information
+      document.getElementById("region-info").textContent = randomRegion;
+      document.getElementById("location-info").textContent = randomLocation.name;
 
-      // Place marker for the target
+      // Place marker on the random location
       if (targetMarker) targetMarker.setMap(null);
       targetMarker = new google.maps.Marker({
-        position: { lat: target.lat, lng: target.lng },
+        position: { lat: randomLocation.lat, lng: randomLocation.lng },
         map: map,
         label: "T",
       });
 
       // Center the map on the target location
-      map.setCenter({ lat: target.lat, lng: target.lng });
-      map.setZoom(12); // Zoom in to the target area
+      map.setCenter({ lat: randomLocation.lat, lng: randomLocation.lng });
+      map.setZoom(12); // Zoom in on the target location
     }
 
     window.onload = initMap;
